@@ -7,10 +7,8 @@
         <div class="flex-container">
             {% for site in pages %}
             <div class="linkList"><h2>{{site.page}}</h2>
-                <br>
-                {% for link in site.links %}
-                <a href={{link}}>{{link}}</a>
-                <br>
+                {% for i in range(no_of_articles) %}
+                <a href={{site.links[i]}}><p>{{site.titles[i]}}</p></a>
                 {% endfor %}
             </div>
             {% endfor %}
