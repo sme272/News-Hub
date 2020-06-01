@@ -1,0 +1,17 @@
+.flex-container{
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch
+    flex-wrap: wrap;
+}
+.linkList{
+    border: 1px outset red;
+    background-color: #ffffe6;
+    width:400;
+    padding: 10px;
+    border-radius: 20px;
+    //box-shadow: 4px 8px #a4a4a4;
+}
+h2{
+    font-family: Verdana, Geneva, sans-serif;
+}
