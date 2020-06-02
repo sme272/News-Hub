@@ -3,7 +3,7 @@ import requests
 import re
 
 from bs4 import BeautifulSoup
-from flask import Flask, render_template
+from flask import Flask, render_template, send_from_directory
 
 
 def get_links():
@@ -15,7 +15,7 @@ def get_links():
         "Kotaku": ("kotaku.com", r"kotaku\.com\/(\w+-)+(\w+|\d+)", r"(\w+-)+\w+"),
         "Anime News Network": (
             "animenewsnetwork.com",
-            r"\/(\w+-)?(\w+\/)\d{4}-\d{2}-\d{2}\/(\w+-)+(\w+|\d+)\/\.\d+", r"([a-zA-Z]+-)+\w+\/\."
+            r"\/(\w+-)?(\w+\/)\d{4}-\d{2}-\d{2}\/(\w+-)+(\w+|\d+)\/\.\d+", r"\/([a-zA-Z]+-)+\w+\/\."
         )
     }
 
@@ -45,7 +45,6 @@ def get_links():
             final_links = []
             titles = []
             i = 0
-            print(name)
             while len(titles) < 10 and i < len(links):
                 if title := re.search(title_pattern, links[i]):
                     title = re.sub("/", " ", title.group())
@@ -70,6 +69,11 @@ app = Flask(__name__)
 def index():
     all_links = get_links()
     return render_template("index.html", pages=all_links, no_of_articles=len(all_links[0]["links"]))
+
+
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory("./static/images/", "favicon.ico", mimetype='image/vnd.microsoft.icon')
 
 if __name__ == "__main__":
     index()

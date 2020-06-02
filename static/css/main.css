@@ -1,27 +1,35 @@
 .flex-container{
     display: flex;
-    justify-content: space-between;
-    align-items: stretch
+    //justify-content: space-between;
+    //align-items: stretch
     flex-wrap: wrap;
 }
 
 .linkList{
-    border: 1px outset red;
-    background-color: #ffffe6;
+    //border: 1px outset red;
+    background-color: #084c61;
     width:400;
     padding: 5px;
     border-radius: 20px;
     //box-shadow: 4px 8px #a4a4a4;
+    margin: 10px;
+    flex-grow: 1;
+    flex: 1 1 25%;
 }
 
 h2{
     font-family: Verdana, Geneva, sans-serif;
+    color: #ffc857;
 }
 
 p{
     font-family: Verdana, Geneva, sans-serif;
-    color: black;
+    color: #ffc857;
 }
 a{
     text-decoration: none;
+}
+
+body{
+    background-color: #177e89;
 }
