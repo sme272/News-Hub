@@ -46,7 +46,8 @@ def get_links():
             titles = []
             i = 0
             while len(titles) < 10 and i < len(links):
-                if title := re.search(title_pattern, links[i]):
+                title = re.search(title_pattern, links[i])
+                if title:
                     title = re.sub("/", " ", title.group())
                     title = re.sub("-", " ", title)
                     title = re.sub(r"(\d{2,4} ){3}", "", title)
