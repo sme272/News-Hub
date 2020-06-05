@@ -1,4 +1,4 @@
-#! /usr/bin/python3.8
+#! /venv/bin/python3
 import requests
 import re
 
