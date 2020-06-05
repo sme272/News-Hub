@@ -4,6 +4,7 @@ import re
 
 from bs4 import BeautifulSoup
 from flask import Flask, render_template, send_from_directory
+from waitress import serve
 
 
 def get_links():
@@ -75,6 +76,8 @@ def index():
 @app.route("/favicon.ico")
 def favicon():
     return send_from_directory("./static/images/", "favicon.ico", mimetype='image/vnd.microsoft.icon')
+
+serve(app, port=8080)
 
 if __name__ == "__main__":
     get_links()
