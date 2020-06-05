@@ -77,4 +77,4 @@ def favicon():
     return send_from_directory("./static/images/", "favicon.ico", mimetype='image/vnd.microsoft.icon')
 
 if __name__ == "__main__":
-    index()
+    get_links()
