@@ -1,5 +1,3 @@
-#! venv/Scripts/python
-
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 
@@ -192,6 +190,8 @@ def favicon():
         "./static/images/", "favicon.ico", mimetype="image/vnd.microsoft.icon"
     )
 
+
+serve(app, port=8080)
 
 if __name__ == "__main__":
     serve(app, port=8080)
