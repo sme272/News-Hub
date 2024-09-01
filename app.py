@@ -1,83 +1,197 @@
-#! venv/bin/python3
-import requests
-import re
-
+from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
+
 from flask import Flask, render_template, send_from_directory
 from waitress import serve
 
+import requests
+import urllib
+
+
+def request_page(name, details):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0"
+    }
+    return name, requests.get(
+        f"http://{details['root']}{details['path']}", headers=headers
+    )
+
 
 def get_links():
-
     pagelist = {
-        "Hackaday": ("hackaday.com", r"\/\d{4}\/\d{2}\/\d{2}\/.+?\/", r"(\w+-)+\w+"),
-        "PC Gamer": ("pcgamer.com", r"pcgamer\.com\/(\w+-)+\w+\/", r"(\w+-)+\w+"),
-        "Eurogamer": ("eurogamer.net", r"\/articles\/(\d{2,}-){3}([a-zA-Z]+-)+\w+", r"(\w+-)+\w+"),
-        "Kotaku": ("kotaku.com", r"kotaku\.com\/(\w+-)+(\w+|\d+)", r"(\w+-)+\w+"),
-        "Anime News Network": (
-            "animenewsnetwork.com",
-            r"\/(\w+-)?(\w+\/)\d{4}-\d{2}-\d{2}\/(\w+-)+(\w+|\d+)\/\.\d+", r"\/([a-zA-Z]+-)+\w+\/\."
-        )
+        "Hackaday": {
+            "root": "hackaday.com",
+            "path": "/",
+            "tag": "h2",
+            "class_": "",
+            "use_root": False,
+        },
+        "PC Gamer": {
+            "root": "pcgamer.com",
+            "path": "/",
+            "tag": "a",
+            "class_": "article-link",
+            "use_root": False,
+        },
+        "Eurogamer": {
+            "root": "eurogamer.net",
+            "path": "/archive",
+            "tag": "a",
+            "class_": "link",
+            "use_root": False,
+        },
+        "Kotaku": {
+            "root": "kotaku.com",
+            "path": "/latest",
+            "tag": "h2",
+            "class_": "",
+            "use_root": False,
+        },
+        "Anime News Network": {
+            "root": "animenewsnetwork.com",
+            "path": "/news",
+            "tag": "h3",
+            "class_": "",
+            "use_root": True,
+        },
+        "Formula 1": {
+            "root": "www.formula1.com",
+            "path": "/en/latest/all.html",
+            "tag": "li",
+            "class_": "group",
+            "use_root": False,
+        },
+        "In the Pipeline": {
+            "root": "www.science.org",
+            "path": "/blogs/pipeline",
+            "tag": "div",
+            "class_": "card-header",
+            "use_root": True,
+        },
+        "FIA Decision Documents": {
+            "root": "www.fia.com",
+            "path": "/documents",
+            "tag": "li",
+            "class_": "document-row",
+            "use_root": True,
+        },
+        "Hacker News": {
+            "root": "news.ycombinator.com",
+            "path": "/news",
+            "tag": "span",
+            "class_": "titleline",
+            "use_root": False,
+        },
+        "Motorsport": {
+            "root": "motorsport.com",
+            "path": "/f1/news",
+            "tag": "a",
+            "class_": "ms-item",
+            "use_root": True,
+        },
+        "Space News": {
+            "root": "spacenews.com",
+            "path": "/section/news-archive",
+            "tag": "h2",
+            "class_": "entry-title",
+            "use_root": False,
+        },
+        "Phys Org": {
+            "root": "phys.org",
+            "path": "/latest-news",
+            "tag": "a",
+            "class_": "news-link",
+            "use_root": False,
+        },
+        "NASA Blog": {
+            "root": "blogs.nasa.gov",
+            "path": "/",
+            "tag": "h2",
+            "class_": "entry-title",
+            "use_root": False,
+        },
     }
 
+    executor = ThreadPoolExecutor(max_workers=10)
+
+    responses = executor.map(request_page, pagelist.keys(), pagelist.values())
+
     pages = []
-    for name, details in pagelist.items():
-        site, link_pattern, title_pattern = details[0], details[1], details[2]
-        page = requests.get("http://" + site)
+
+    for response in responses:
+        name, page = response
+        details = pagelist[name]
 
         if page.status_code == 200:
+            print(name)
             soup = BeautifulSoup(page.text, features="html.parser")
-            tag_list = soup.find_all("a", href=True)
-
-            link_regex = re.compile(link_pattern)
+            if details["class_"]:
+                tag_list = soup.find_all(details["tag"], class_=details["class_"])
+            else:
+                tag_list = soup.find_all(details["tag"])
 
             links = []
-            for tag in tag_list:
-                link = link_regex.search(str(tag))
-                if link is not None:
-                    link = link.group()
-                    if site not in link:
-                        link = "http://" + site + link
-                    else:
-                        link = "http://" + link
-                    links.append(link)
-            links = list(set(links))
-
-            final_links = []
             titles = []
-            i = 0
-            while len(titles) < 10 and i < len(links):
-                title = re.search(title_pattern, links[i])
-                if title:
-                    title = re.sub("/", " ", title.group())
-                    title = re.sub("-", " ", title)
-                    title = re.sub(r"(\d{2,4} ){3}", "", title)
-                    title = re.sub(r"\d{10}", "", title)
-                    title = title.strip(".")
-                    title = title.capitalize()
+            print(name)
+            for tag in tag_list:
+                if tag.name == "a":
+                    link = tag["href"]
+                    title = tag.text
+                elif tag.find("a"):
+                    link = tag.a["href"]
+                    title = tag.text
+                else:
+                    try:
+                        link = tag.parent["href"]
+                        title = tag.text
+                    except KeyError:
+                        continue
 
-                    titles.append(title)
-                    final_links.append(links[i])
-                i += 1
+                protocols = ["http://", "http//", "https://", "https//"]
+                for protocol in protocols:
+                    if link.startswith(protocol):
+                        link = link[len(protocol) :]
 
-            pages.append({"page": name, "links": final_links, "titles": titles})
+                link = urllib.parse.quote(link)
+                if details["use_root"]:
+                    link = f"https://{details['root']}{link}"
+                else:
+                    link = f"https://{link}"
+
+                links.append(link)
+                titles.append(title)
+
+            pages.append(
+                {
+                    "page": name,
+                    "url": f"https://{details['root']}",
+                    "links": links[:10],
+                    "titles": titles[:10],
+                }
+            )
 
     return pages
 
 
 app = Flask(__name__)
 
+
 @app.route("/")
 def index():
     all_links = get_links()
-    return render_template("index.html", pages=all_links, no_of_articles=len(all_links[0]["links"]))
+    return render_template(
+        "index.html", pages=all_links, no_of_articles=len(all_links[0]["links"])
+    )
 
 
 @app.route("/favicon.ico")
 def favicon():
-    return send_from_directory("./static/images/", "favicon.ico", mimetype='image/vnd.microsoft.icon')
+    return send_from_directory(
+        "./static/images/", "favicon.ico", mimetype="image/vnd.microsoft.icon"
+    )
+
 
 serve(app, port=8080)
 
 if __name__ == "__main__":
-    get_links()
+    serve(app, port=8080)
